@@ -234,12 +234,6 @@ public class GunPlayer implements Reloadable
 		if (gun.isUnlimitedAmmo())
 			return 0;
 
-		if (plugin.isUltimateArenaEnabled())
-		{
-			if (plugin.getUltimateArenaHandler().isAmmoUnlimited(getPlayer()))
-				return 0;
-		}
-
 		if (unlimitedAmmoEnabled())
 			return 0;
 
@@ -432,9 +426,6 @@ public class GunPlayer implements Reloadable
 
 	public final boolean unlimitedAmmoEnabled()
 	{
-		if (plugin.isSwornRPGEnabled())
-			return plugin.getSwornRPGHandler().isUnlimitedAmmoEnabled(player);
-
 		return false;
 	}
 

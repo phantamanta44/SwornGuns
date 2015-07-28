@@ -28,7 +28,8 @@ canClickRight=false
 outOfAmmoMessage=&6This gun needs &cCLAY BALLS
 --------
 bulletType=SNOWBALL
-gunSound=irongolem hit,wither shoot
+gunSound=mob.irongolem.hit,random.explode
+gunSoundFar=mob.wither.shoot
 needsPermission=false
 hasSmokeTrail=false
 --------

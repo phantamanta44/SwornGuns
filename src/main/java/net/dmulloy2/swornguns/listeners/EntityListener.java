@@ -160,20 +160,6 @@ public class EntityListener implements Listener, Reloadable
 				block.getLocation().getWorld().playEffect(block.getLocation(), Effect.STEP_SOUND, mat);
 			}
 
-			// Make sure they aren't in an arena
-			if (plugin.isUltimateArenaEnabled())
-			{
-				if (plugin.getUltimateArenaHandler().isInArena(bullet.getShooter().getPlayer()))
-					return;
-			}
-
-			// Check with Factions too
-			if (plugin.isSwornNationsEnabled())
-			{
-				if (! plugin.getSwornNationsHandler().checkFactions(block.getLocation(), true))
-					return;
-			}
-
 			// Block cracking
 			if (blockCrack && mat == Material.STONE)
 			{

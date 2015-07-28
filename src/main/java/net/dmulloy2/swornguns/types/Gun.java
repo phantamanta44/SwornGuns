@@ -34,6 +34,7 @@ import net.dmulloy2.util.NumberUtil;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
@@ -115,7 +116,8 @@ public class Gun implements Cloneable
 
 	private EffectType releaseEffect;
 
-	private List<Sound> gunSound = new ArrayList<Sound>();
+	private List<String> gunSound = new ArrayList<String>();
+	private List<String> gunSoundFar = new ArrayList<String>();
 	private List<String> lore = new ArrayList<String>();
 
 	private final SwornGuns plugin;
@@ -173,15 +175,26 @@ public class Gun implements Cloneable
 
 				this.changed = true;
 				this.roundsFired++;
-
-				for (Sound sound : gunSound.toArray(new Sound[0]))
-				{
-					if (sound != null)
-					{
-						if (localGunSound)
-							player.playSound(player.getLocation(), sound, (float) gunVolume, (float) gunPitch);
+				
+				if (localGunSound) {
+					for (String sound : gunSound.toArray(new String[0]))
+						player.playSound(player.getLocation(), sound, (float) gunVolume, (float) gunPitch);
+				}
+				else {
+					World world = player.getWorld();
+					Location soundLocation = player.getLocation();
+					for (Player other : world.getPlayers().toArray(new Player[0])) {
+						String[] soundList;
+						double distance = other.getLocation().distance(soundLocation);
+						if (distance <= 18.0)
+							soundList = gunSound.toArray(new String[0]);
+						else if (distance <= 72.0)
+							soundList = gunSoundFar.toArray(new String[0]);
 						else
-							player.getWorld().playSound(player.getLocation(), sound, (float) gunVolume, (float) gunPitch);
+							continue;
+						Location modifiedLocation = soundLocation.toVector().subtract(other.getLocation().toVector()).normalize().multiply(2.71F).toLocation(player.getWorld());
+						for (String sound : soundList)
+							other.playSound(modifiedLocation, sound, (float) gunVolume, (float) gunPitch);
 					}
 				}
 
@@ -231,9 +244,9 @@ public class Gun implements Cloneable
 				player.playSound(owner.getPlayer().getLocation(), Sound.ITEM_BREAK, 20.0F, 20.0F);
 
 				if (outOfAmmoMessage.isEmpty())
-					player.sendMessage(plugin.getPrefix() + FormatUtil.format("&eThis gun needs &b{0}&e!", ammo.getName()));
+					player.sendMessage(FormatUtil.format("&eThis gun needs &b{0}&e!", ammo.getName()));
 				else
-					player.sendMessage(plugin.getPrefix() + FormatUtil.format(outOfAmmoMessage, ammo.getName()));
+					player.sendMessage(FormatUtil.format(outOfAmmoMessage, ammo.getName()));
 
 				finishShooting();
 			}
@@ -629,9 +642,19 @@ public class Gun implements Cloneable
 	{
 		for (String name : val.split(","))
 		{
-			Sound sound = SwornGuns.getSound(name);
-			if (sound != null)
-				gunSound.add(sound);
+			gunSound.add(name);
+		}
+	}
+	
+	/**
+	 * Adds distant gun sounds from a composite string
+	 *
+	 * @param val Composite string of sounds
+	 */
+	public void addGunSoundsFar(String val) {
+		for (String name : val.split(","))
+		{
+			gunSoundFar.add(name);
 		}
 	}
 
@@ -673,4 +696,5 @@ public class Gun implements Cloneable
 		} catch (Throwable ex) { }
 		return copy();
 	}
+	
 }

@@ -1,9 +1,8 @@
 name: SwornGuns
 main: net.dmulloy2.swornguns.SwornGuns
 version: ${project.version}${project.build.number}
-author: dmulloy2
+authors: [dmulloy2, Phanta]
 description: Guns in Minecraft!
-softdepend: [UltimateArena, SwornRPG]
 commands: 
   swornguns:
     description: SwornGuns root command
@@ -15,7 +14,7 @@ permissions:
     default: false
     children:
       swornguns.toggle: true
-      sworngins.reload: true
+      swornguns.reload: true
   swornguns.reload:
     description: Lets you reload the plugin
     default: false

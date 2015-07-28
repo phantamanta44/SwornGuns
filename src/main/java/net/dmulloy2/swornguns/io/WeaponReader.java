@@ -129,8 +129,10 @@ public class WeaponReader
 				gun.setNeedsPermission(Util.toBoolean(val));
 			if (var.equals("hassmoketrail"))
 				gun.setHasSmokeTrail(Util.toBoolean(val));
-			if (var.equals("gunsound"))
+			if (var.equals("gunsoundcloase"))
 				gun.addGunSounds(val);
+			if (var.equals("gunsoundfar"))
+				gun.addGunSoundsFar(val);
 			if (var.equals("maxclipsize"))
 				gun.setMaxClipSize(NumberUtil.toInt(val));
 			if (var.equals("hasclip"))
