@@ -194,9 +194,10 @@ public class WeaponReader
 			}
 			
 			if (var.equals("initialclip"))
-			{
 				gun.setInitialClip(NumberUtil.toInt(val));
-			}
+			
+			if (var.equals("zoomLevel"))
+				gun.setZoomLevel(NumberUtil.toInt(val));
 		}
 	}
 }

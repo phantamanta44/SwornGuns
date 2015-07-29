@@ -98,7 +98,7 @@ public class GunPlayer implements Reloadable
 				}
 				else
 				{
-					checkAim();
+					checkAim(gun.getZoomLevel());
 				}
 			}
 		}
@@ -117,7 +117,7 @@ public class GunPlayer implements Reloadable
 				}
 				else
 				{
-					checkAim();
+					checkAim(gun.getZoomLevel());
 				}
 			}
 		}
@@ -213,7 +213,7 @@ public class GunPlayer implements Reloadable
 		return aimedIn;
 	}
 
-	private final void checkAim()
+	private final void checkAim(int potency)
 	{
 		if (aimedIn)
 		{
@@ -222,7 +222,7 @@ public class GunPlayer implements Reloadable
 		}
 		else
 		{
-			getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 12000, 4));
+			getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 12000, potency));
 			this.aimedIn = true;
 		}
 	}

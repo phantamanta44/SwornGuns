@@ -19,6 +19,7 @@
 package net.dmulloy2.swornguns.types;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
@@ -26,11 +27,13 @@ import java.util.logging.Level;
 
 import lombok.Data;
 import net.dmulloy2.swornguns.SwornGuns;
+import net.dmulloy2.swornguns.types.Attachment.AttachmentList;
 import net.dmulloy2.types.MyMaterial;
 import net.dmulloy2.util.FormatUtil;
 import net.dmulloy2.util.MaterialUtil;
 import net.dmulloy2.util.NumberUtil;
 
+import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -87,6 +90,7 @@ public class Gun implements Cloneable
 	private int clipRemaining = -1;
 	private int clipSize;
 	private int initialClip = -1;
+	private int zoomLevel = 4;
 
 	private double gunDamage;
 	private double armorPenetration;
@@ -105,7 +109,7 @@ public class Gun implements Cloneable
 	private double gunPitch = 2.0D;
 
 	private String projType = "";
-	private String explosionType = "FIREWORK";
+	private String explosionType = "TNT";
 	private ReloadType reloadType = ReloadType.NORMAL;
 
 	private String gunName;
@@ -113,6 +117,7 @@ public class Gun implements Cloneable
 	private String outOfAmmoMessage = "";
 
 	private GunPlayer owner;
+	private AttachmentList attachments = new AttachmentList();
 
 	private EffectType releaseEffect;
 
@@ -164,7 +169,7 @@ public class Gun implements Cloneable
 				{
 					owner.removeAmmo(this, ammoAmtNeeded);
 
-					if (roundsFired >= maxClipSize && hasClip)
+					if (roundsFired >= getMaxClipSize() && hasClip)
 					{
 						reloadGun();
 						return;
@@ -178,7 +183,7 @@ public class Gun implements Cloneable
 				
 				if (localGunSound) {
 					for (String sound : gunSound.toArray(new String[0]))
-						player.playSound(player.getLocation(), sound, (float) gunVolume, (float) gunPitch);
+						player.playSound(player.getLocation(), sound, (float) getGunVolume(), (float) getGunPitch());
 				}
 				else {
 					World world = player.getWorld();
@@ -194,22 +199,22 @@ public class Gun implements Cloneable
 							continue;
 						Location modifiedLocation = soundLocation.toVector().subtract(other.getLocation().toVector()).normalize().multiply(2.71F).toLocation(player.getWorld());
 						for (String sound : soundList)
-							other.playSound(modifiedLocation, sound, (float) gunVolume, (float) gunPitch);
+							other.playSound(modifiedLocation, sound, (float) getGunVolume(), (float) getGunPitch());
 					}
 				}
 
-				double accuracy = this.accuracy;
+				double accuracy = this.getAccuracy();
 				if (owner.getPlayer().isSneaking() && accuracy_crouched > -1.0D)
 				{
 					accuracy = accuracy_crouched;
 				}
 
-				if (owner.isAimedIn() && accuracy_aimed > -1.0D)
+				if (owner.isAimedIn() && getAccuracy_aimed() > -1.0D)
 				{
-					accuracy = accuracy_aimed;
+					accuracy = getAccuracy_aimed();
 				}
 
-				for (int i = 0; i < bulletsPerClick; i++)
+				for (int i = 0; i < getBulletsPerClick(); i++)
 				{
 					int acc = (int) (accuracy * 1000.0D);
 
@@ -230,13 +235,13 @@ public class Gun implements Cloneable
 					double zd = -Math.sin(Math.toRadians(dir)) * Math.cos(Math.toRadians(pitch)) + zwep;
 
 					Vector vec = new Vector(xd, yd, zd);
-					vec.multiply(bulletSpeed);
+					vec.multiply(getBulletSpeed());
 
 					Bullet bullet = new Bullet(plugin, owner, this, vec);
 					plugin.addBullet(bullet);
 				}
 
-				if (roundsFired >= maxClipSize && hasClip)
+				if (roundsFired >= getMaxClipSize() && hasClip)
 					reloadGun();
 			}
 			else
@@ -259,6 +264,7 @@ public class Gun implements Cloneable
 	public final void clear()
 	{
 		this.owner = null;
+		this.attachments.clear();
 	}
 
 	/**
@@ -290,7 +296,7 @@ public class Gun implements Cloneable
 		{
 			if (roundsPerBurst > 1)
 			{
-				if (ticks % bulletDelay == 0)
+				if (ticks % getBulletDelay() == 0)
 				{
 					this.bulletsShot++;
 
@@ -309,6 +315,18 @@ public class Gun implements Cloneable
 
 		if (reloading)
 			this.firing = false;
+		
+		if (owner != null) {
+			if (attachments.isProvidingLight()) {
+				// TODO tactical lights
+			}
+			if (attachments.isLaser()) {
+				Location ploc = owner.getPlayer().getLocation();
+				for (int i = 0; i < 32 && !ploc.getBlock().getType().isTransparent(); i++)
+					ploc.add(ploc.getDirection().normalize());
+				ploc.getWorld().playEffect(ploc, Effect.COLOURED_DUST, 0xCC0000);
+			}
+		}
 	}
 
 	/**
@@ -332,6 +350,7 @@ public class Gun implements Cloneable
 		g.accuracy_crouched = this.accuracy_crouched;
 		g.maxDistance = this.maxDistance;
 		g.gunVolume = this.gunVolume;
+		g.gunPitch = this.gunPitch;
 		g.gunDamage = this.gunDamage;
 		g.explodeRadius = this.explodeRadius;
 		g.fireRadius = this.fireRadius;
@@ -361,6 +380,7 @@ public class Gun implements Cloneable
 		g.releaseTime = this.releaseTime;
 		g.canGoPastMaxDistance = this.canGoPastMaxDistance;
 		g.priority = this.priority;
+		g.attachments = this.attachments;
 
 		if (releaseEffect != null)
 		{
@@ -393,39 +413,39 @@ public class Gun implements Cloneable
 			if (reloadType == ReloadType.BOLT)
 			{
 				if (amtReload == 6)
-					owner.getPlayer().playSound(owner.getPlayer().getLocation(), Sound.DOOR_OPEN, 2.0F, 1.5F);
+					owner.getPlayer().getWorld().playSound(owner.getPlayer().getLocation(), Sound.DOOR_OPEN, 2.0F, 1.5F);
 				if (amtReload == reloadTime - 4)
-					owner.getPlayer().playSound(owner.getPlayer().getLocation(), Sound.DOOR_CLOSE, 1.0F, 1.5F);
+					owner.getPlayer().getWorld().playSound(owner.getPlayer().getLocation(), Sound.DOOR_CLOSE, 1.0F, 1.5F);
 			}
 			else if (reloadType == ReloadType.PUMP || reloadType == ReloadType.INDIVIDUAL_BULLET)
 			{
 				int rep = (reloadTime - 10) / getMaxClipSize();
 				if (amtReload >= 5 && amtReload <= reloadTime - 5 && amtReload % rep == 0)
 				{
-					owner.getPlayer().playSound(owner.getPlayer().getLocation(), Sound.NOTE_STICKS, 1.0F, 1.0F);
-					owner.getPlayer().playSound(owner.getPlayer().getLocation(), Sound.NOTE_SNARE_DRUM, 1.0F, 2.0F);
+					owner.getPlayer().getWorld().playSound(owner.getPlayer().getLocation(), Sound.NOTE_STICKS, 1.0F, 1.0F);
+					owner.getPlayer().getWorld().playSound(owner.getPlayer().getLocation(), Sound.NOTE_SNARE_DRUM, 1.0F, 2.0F);
 				}
 
 				if (amtReload == reloadTime - 3)
-					owner.getPlayer().playSound(owner.getPlayer().getLocation(), Sound.PISTON_EXTEND, 1.0F, 2.0F);
+					owner.getPlayer().getWorld().playSound(owner.getPlayer().getLocation(), Sound.PISTON_EXTEND, 1.0F, 2.0F);
 				else if (amtReload == reloadTime - 1)
-					owner.getPlayer().playSound(owner.getPlayer().getLocation(), Sound.PISTON_RETRACT, 1.0F, 2.0F);
+					owner.getPlayer().getWorld().playSound(owner.getPlayer().getLocation(), Sound.PISTON_RETRACT, 1.0F, 2.0F);
 			}
 			else
 			{
 				if (amtReload == 6)
 				{
-					owner.getPlayer().playSound(owner.getPlayer().getLocation(), Sound.FIRE_IGNITE, 2.0F, 2.0F);
-					owner.getPlayer().playSound(owner.getPlayer().getLocation(), Sound.DOOR_OPEN, 1.0F, 2.0F);
+					owner.getPlayer().getWorld().playSound(owner.getPlayer().getLocation(), Sound.FIRE_IGNITE, 2.0F, 2.0F);
+					owner.getPlayer().getWorld().playSound(owner.getPlayer().getLocation(), Sound.DOOR_OPEN, 1.0F, 2.0F);
 				}
 
 				if (amtReload == reloadTime / 2)
-					owner.getPlayer().playSound(owner.getPlayer().getLocation(), Sound.PISTON_RETRACT, 0.33F, 2.0F);
+					owner.getPlayer().getWorld().playSound(owner.getPlayer().getLocation(), Sound.PISTON_RETRACT, 0.33F, 2.0F);
 
 				if (amtReload == reloadTime - 4)
 				{
-					owner.getPlayer().playSound(owner.getPlayer().getLocation(), Sound.FIRE_IGNITE, 2.0F, 2.0F);
-					owner.getPlayer().playSound(owner.getPlayer().getLocation(), Sound.DOOR_CLOSE, 1.0F, 2.0F);
+					owner.getPlayer().getWorld().playSound(owner.getPlayer().getLocation(), Sound.FIRE_IGNITE, 2.0F, 2.0F);
+					owner.getPlayer().getWorld().playSound(owner.getPlayer().getLocation(), Sound.DOOR_CLOSE, 1.0F, 2.0F);
 				}
 			}
 		}
@@ -435,21 +455,21 @@ public class Gun implements Cloneable
 			{
 				if (timer == 8)
 				{
-					owner.getPlayer().playSound(owner.getPlayer().getLocation(), Sound.PISTON_EXTEND, 1.0F, 2.0F);
+					owner.getPlayer().getWorld().playSound(owner.getPlayer().getLocation(), Sound.PISTON_EXTEND, 1.0F, 2.0F);
 				}
 
 				if (timer == 6)
 				{
-					owner.getPlayer().playSound(owner.getPlayer().getLocation(), Sound.PISTON_RETRACT, 1.0F, 2.0F);
+					owner.getPlayer().getWorld().playSound(owner.getPlayer().getLocation(), Sound.PISTON_RETRACT, 1.0F, 2.0F);
 				}
 			}
 
 			if (reloadType == ReloadType.BOLT)
 			{
 				if (timer == getBulletDelayTime() - 4)
-					owner.getPlayer().playSound(owner.getPlayer().getLocation(), Sound.DOOR_OPEN, 2.0F, 1.25F);
+					owner.getPlayer().getWorld().playSound(owner.getPlayer().getLocation(), Sound.DOOR_OPEN, 2.0F, 1.25F);
 				if (timer == 6)
-					owner.getPlayer().playSound(owner.getPlayer().getLocation(), Sound.DOOR_CLOSE, 1.0F, 1.25F);
+					owner.getPlayer().getWorld().playSound(owner.getPlayer().getLocation(), Sound.DOOR_CLOSE, 1.0F, 1.25F);
 			}
 		}
 	}
@@ -461,7 +481,7 @@ public class Gun implements Cloneable
 	 */
 	private void doRecoil(Player player)
 	{
-		if (recoil != 0.0D)
+		if (getRecoil() != 0.0D)
 		{
 			Location ploc = player.getLocation();
 			double dir = -ploc.getYaw() - 90.0F;
@@ -471,9 +491,10 @@ public class Gun implements Cloneable
 			double zd = -Math.sin(Math.toRadians(dir)) * Math.cos(Math.toRadians(pitch));
 
 			Vector vec = new Vector(xd, yd, zd);
-			vec.multiply(recoil / 2.0D).setY(0);
-
-			player.setVelocity(player.getVelocity().add(vec));
+			vec.multiply(getRecoil() / 2.0D).setY(0);
+			
+			ploc.setPitch((float)Math.min(Math.max(-90, ploc.getPitch() + getRecoil() / 4.0D), 90));
+			player.teleport(ploc);
 		}
 	}
 
@@ -657,7 +678,76 @@ public class Gun implements Cloneable
 			gunSoundFar.add(name);
 		}
 	}
+	
+	public void addAttachment(String name) {
+		Attachment attach;
+		if ((attach = plugin.getLoadedAttachments().get("name")) != null)
+			attachments.add(attach);
+	}
+	
+	public void removeAttachment(String name) {
+		Iterator<Attachment> iter = attachments.iterator();
+		while (iter.hasNext()) {
+			if (iter.next().getFileName().equals(name))
+				iter.remove();
+		}
+	}
+	
+	public int getMaxClipSize() {
+		return this.clipSize + attachments.getAmmoModifier();
+	}
+	
+	public int getZoomLevel() {
+		return this.zoomLevel + attachments.getZoomModifier();
+	}
+	
+	public int getBulletDelay() {
+		return this.bulletDelay - attachments.getBulletDelayModifier();
+	}
+	
+	public double getRecoil() {
+		if (attachments.isBipod() && owner != null) {
+			Location ploc = owner.getPlayer().getLocation();
+			float dir = -ploc.getYaw() - 90F;
+			double xOffset = Math.sin(dir), zOffset = Math.cos(dir);
+			if (ploc.add(xOffset, 0.0D, zOffset).getBlock().getType().isSolid())
+				return 0.0D;
+		}
+		return this.recoil * attachments.getRecoilModifier();
+	}
+	
+	public double getAccuracy() {
+		return this.accuracy * attachments.getUnzoomedAccuracyModifier();
+	}
 
+	public double getAccuracy_aimed() {
+		return this.accuracy_aimed * attachments.getZoomedAccuracyModifier();
+	}
+	
+	public double getGunVolume() {
+		return this.gunVolume * attachments.getVolumeModifier();
+	}
+	
+	public double getGunPitch() {
+		return this.gunPitch * attachments.getPitchModifier();
+	}
+	
+	public double getBulletSpeed() {
+		return this.bulletSpeed * attachments.getBulletDelayModifier();
+	}
+	
+	public double getGunDamage() {
+		return attachments.getNewDmg() != -1.0D ? attachments.getNewDmg() : this.gunDamage;
+	}
+	
+	public int getBulletsPerClick() {
+		return attachments.getNewShotsPerClick() != -1 ? attachments.getNewShotsPerClick() : this.bulletsPerClick;
+	}
+	
+	public boolean isHasSmokeTrail() {
+		return this.hasSmokeTrail & !attachments.isHidingSmoke();
+	}
+	
 	@Override
 	public String toString()
 	{

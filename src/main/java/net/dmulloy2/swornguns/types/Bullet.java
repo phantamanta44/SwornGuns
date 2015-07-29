@@ -484,6 +484,8 @@ public class Bullet
 				}
 			}
 		}
+		if (shotFrom.getAttachments().isProducingSmoke())
+			lastLocation.getWorld().playEffect(lastLocation, Effect.CLOUD, 0);
 	}
 
 	public final void destroy()

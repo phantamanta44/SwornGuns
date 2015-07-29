@@ -39,9 +39,11 @@ import net.dmulloy2.swornguns.commands.CmdList;
 import net.dmulloy2.swornguns.commands.CmdReload;
 import net.dmulloy2.swornguns.commands.CmdToggle;
 import net.dmulloy2.swornguns.commands.CmdVersion;
+import net.dmulloy2.swornguns.io.AttachmentReader;
 import net.dmulloy2.swornguns.io.WeaponReader;
 import net.dmulloy2.swornguns.listeners.EntityListener;
 import net.dmulloy2.swornguns.listeners.PlayerListener;
+import net.dmulloy2.swornguns.types.Attachment;
 import net.dmulloy2.swornguns.types.Bullet;
 import net.dmulloy2.swornguns.types.EffectType;
 import net.dmulloy2.swornguns.types.Gun;
@@ -69,6 +71,7 @@ public class SwornGuns extends SwornPlugin implements SwornGunsAPI
 
 	// Maps
 	private @Getter Map<String, Gun> loadedGuns;
+	private @Getter Map<String, Attachment> loadedAttachments;
 	private @Getter Map<Integer, Bullet> bullets;
 	private @Getter Map<String, GunPlayer> players;
 	private @Getter Map<Integer, EffectType> effects;
@@ -131,6 +134,7 @@ public class SwornGuns extends SwornPlugin implements SwornGunsAPI
 		// Load guns
 		loadGuns();
 		loadProjectiles();
+		loadAttachments();
 
 		getOnlinePlayers();
 
@@ -231,8 +235,7 @@ public class SwornGuns extends SwornPlugin implements SwornGunsAPI
 		logHandler.log("Loaded {0} projectiles!", loaded);
 	}
 
-	private static final List<String> stockGuns = Arrays.asList("AutoShotgun", "DoubleBarrel", "Flamethrower", "Pistol", "Rifle",
-			"RocketLauncher", "Shotgun", "Sniper");
+	private static final List<String> stockGuns = Arrays.asList("Sniper");
 
 	private void loadGuns()
 	{
@@ -281,6 +284,45 @@ public class SwornGuns extends SwornPlugin implements SwornGunsAPI
 		}
 
 		logHandler.log("Loaded {0} guns!", loaded);
+	}
+	
+	private static final List<String> stockAttachments = Arrays.asList("FlashSuppressor", "StraightPullBolt", "RifleScope");
+	
+	private void loadAttachments()
+	{
+		int loaded = 0;
+
+		File dir = new File(getDataFolder(), "attachments");
+		if (! dir.exists())
+			dir.mkdirs();
+
+		File[] children = dir.listFiles(MacFileFilter.get());
+		if (children == null || children.length == 0)
+		{
+			for (String s : stockAttachments)
+			{
+				saveResource("attachments" + File.separator + s, false);
+			}
+
+			children = dir.listFiles(MacFileFilter.get());
+		}
+
+		for (File child : children)
+		{
+			AttachmentReader reader = new AttachmentReader(this, child);
+			if (reader.isLoaded())
+			{
+				Attachment att = reader.getAtt();
+				loadedAttachments.put(child.getName(), att);
+				loaded++;
+			}
+			else
+			{
+				logHandler.log(Level.WARNING, "Could not load attachment: {0}", child.getName());
+			}
+		}
+
+		logHandler.log("Loaded {0} attachments!", loaded);
 	}
 
 	private void getOnlinePlayers()
@@ -486,8 +528,10 @@ public class SwornGuns extends SwornPlugin implements SwornGunsAPI
 
 		// Reload guns
 		loadedGuns.clear();
+		loadedAttachments.clear();
 		loadGuns();
 		loadProjectiles();
+		loadAttachments();
 
 		// Refresh players
 		if (! players.isEmpty())
