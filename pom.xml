@@ -89,9 +89,7 @@
                   <pattern>net.dmulloy2</pattern>
                   <shadedPattern>net.dmulloy2.swornguns</shadedPattern>
                   <excludes>
-                    <exclude>net.dmulloy2.swornguns*</exclude>
-                    <exclude>net.dmulloy2.swornrpg*</exclude>
-                    <exclude>net.dmulloy2.ultimatearena*</exclude>
+                    <exclude>net.dmulloy2.swornguns.*.*</exclude>
                   </excludes>
                 </relocation>
               </relocations>
@@ -120,6 +118,14 @@
       <resource>
         <targetPath>projectile/</targetPath>
         <directory>${basedir}/src/main/resources/projectile/</directory>
+        <filtering>true</filtering>
+        <includes>
+          <include>*</include>
+        </includes>
+      </resource>
+      <resource>
+        <targetPath>attachments/</targetPath>
+        <directory>${basedir}/src/main/resources/attachments/</directory>
         <filtering>true</filtering>
         <includes>
           <include>*</include>
