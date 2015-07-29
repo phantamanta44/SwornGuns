@@ -13,15 +13,15 @@ import net.dmulloy2.swornguns.SwornGuns;
 @Data
 public class Attachment {
 
-	private int ammoModifier;
-	private int zoomModifier;
-	private int bulletDelayModifier;
-	private double recoilModifier;
-	private double zoomedAccuracyModifier;
-	private double unzoomedAccuracyModifier;
-	private double volumeModifier;
-	private double pitchModifier;
-	private double bulletSpeedModifier;
+	private int ammoModifier = 0;
+	private int zoomModifier = 0;
+	private int bulletDelayModifier = 0;
+	private double recoilModifier = 1.0D;
+	private double zoomedAccuracyModifier = 1.0D;
+	private double unzoomedAccuracyModifier = 1.0D;
+	private double volumeModifier = 1.0D;
+	private double pitchModifier = 1.0D;
+	private double bulletSpeedModifier = 1.0D;
 	private boolean bipod = false;
 	private boolean providingLight = false;
 	private boolean laser = false;
