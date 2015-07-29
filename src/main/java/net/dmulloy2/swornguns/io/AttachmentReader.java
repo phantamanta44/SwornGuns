@@ -91,6 +91,8 @@ public class AttachmentReader {
 				att.setNewDmg(NumberUtil.toDouble(val));
 			if (var.equals("bulletsperclickoverride"))
 				att.setNewShotsPerClick(NumberUtil.toInt(val));
+			if (var.equals("description"))
+				att.setDescription(val);
 		}
 	}
 	

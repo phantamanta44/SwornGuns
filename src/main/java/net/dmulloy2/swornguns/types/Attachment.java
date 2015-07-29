@@ -1,10 +1,12 @@
 package net.dmulloy2.swornguns.types;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import net.dmulloy2.swornguns.SwornGuns;
+import net.dmulloy2.util.FormatUtil;
 
 /**
  * @author Phanta
@@ -32,12 +34,23 @@ public class Attachment {
 	
 	private String name;
 	private String fileName;
+	private List<String> description = new ArrayList<String>();
 	
 	private final SwornGuns plugin;
 	
 	public Attachment(String name, SwornGuns plugin) {
 		this.name = this.fileName = name;
 		this.plugin = plugin;
+	}
+	
+	public void setDescription(String val)
+	{
+		description.clear();
+
+		for (String s : val.split(";"))
+		{
+			description.add(FormatUtil.format(s));
+		}
 	}
 	
 	@SuppressWarnings("serial")
