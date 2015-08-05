@@ -493,8 +493,11 @@ public class Gun implements Cloneable
 			Vector vec = new Vector(xd, yd, zd);
 			vec.multiply(getRecoil() / 2.0D).setY(0);
 			
-			ploc.setPitch((float)Math.min(Math.max(-90, ploc.getPitch() + getRecoil() / 4.0D), 90));
-			player.teleport(ploc);
+			player.setVelocity(vec);
+			
+			// Too jerky to work well
+			//ploc.setPitch((float)Math.min(Math.max(-90, ploc.getPitch() - getRecoil()), 90));
+			//player.teleport(ploc);
 		}
 	}
 
@@ -733,7 +736,7 @@ public class Gun implements Cloneable
 	}
 	
 	public double getBulletSpeed() {
-		return this.bulletSpeed * attachments.getBulletDelayModifier();
+		return this.bulletSpeed * attachments.getBulletSpeedModifier();
 	}
 	
 	public double getGunDamage() {

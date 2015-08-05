@@ -90,6 +90,7 @@ public class SwornGuns extends SwornPlugin implements SwornGunsAPI
 
 		// Initialize variables
 		loadedGuns = new HashMap<>();
+		loadedAttachments = new HashMap<>();
 		bullets = new ConcurrentHashMap<>();
 		players = new ConcurrentHashMap<>();
 		effects = new ConcurrentHashMap<>();
